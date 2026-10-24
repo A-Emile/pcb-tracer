@@ -1,2 +1,4 @@
 SPEC.md
 spec_belege/
+node_modules/
+dist/

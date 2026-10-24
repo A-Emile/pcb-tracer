@@ -13,10 +13,34 @@ Browser-Speicher des Geräts (IndexedDB) und werden nirgends hochgeladen.
 - Durchsicht: Ober- und Unterseite überblenden oder per Halten kurz umschalten
 - Ausrichten: Via-Paare von Hand setzen (Lupe, Einrasten auf Vias, Vorschlag des Gegenstücks),
   weitere Paare automatisch vorschlagen lassen, Abweichung je Paar als Ampelfarbe
+- Ansicht drehen und spiegeln (zwei Finger, Ansicht ⟲ ⟳ Spiegeln, Tasten R / Umschalt+R / F), Kompass setzt zurück
+- Platine gerade stellen (⋯ → Gerade stellen): Linie entlang einer Bahn ziehen oder 4 Ecken antippen
+- Bahnen nachziehen (Bahnen, Desktop X): Ecken mit Lupe bzw. Klick, Einrasten auf Vias und eigene Ecken/Bahnen (Abzweig),
+  Winkel frei mit Einrasten nahe 0/45/90° oder nur 45°, Breite (W), Via (V), letzte Ecke zurück (↶, Rücktaste),
+  beenden (Doppeltipp/Doppelklick, Ende, Esc). Bahn endet am Via; Tipp auf das Via startet auf der anderen Lage neu.
+  Netze werden automatisch erkannt, Antippen hebt hervor, Benennen über das Menü
 
-Geplant: Signale verfolgen, Notizen und Markierungen, Export/Import, Nahaufnahmen.
+Geplant: Bahnen bearbeiten, Netzliste, Export/Import, Nahaufnahmen.
 
 ## Technik
 
-Eine einzige Datei (`index.html`), kein Build-Schritt. WebGL2 für die Darstellung, Web Worker für
-Import, Einrasten und Via-Suche. Zuordnung der Seiten: Perspektive plus Thin-Plate-Spline durch alle Paare.
+TypeScript-Module ohne Framework, gebaut mit Vite. WebGL2 für die Darstellung, ein Modul-Worker für
+Import, Einrasten, Via-Suche und das Material-Modell; die Material-Masken rechnet die GPU je Kachel beim Anzeigen
+(`material/gpu.ts`, Shader-Durchgänge, nichts gespeichert). Zuordnung der Seiten: Perspektive plus Thin-Plate-Spline durch alle Paare.
+Aufbau: `src/main.ts` (Start), `src/state.ts` + `src/types.ts` (Zustand, Kern-Typen), darunter je Thema ein Ordner
+(`render/`, `align/`, `snap/`, `material/`, `layers/`, `draw/`, `ui/`, `db/`, `worker/`).
+
+## Entwickeln
+
+```
+npm install
+npm run dev        # Entwicklungsserver mit Neuladen
+npm run build      # Typprüfung + Build nach dist/ (relative Pfade, läuft unter jedem Pfad)
+npm run watch      # baut dist/ bei jeder Änderung neu
+npm run typecheck  # nur tsc --noEmit
+```
+
+Testhilfen: mit `?dev` in der URL liegen alle Exporte der Module als globale Namen auf `window`
+(für Testskripte), dazu `__devImport(name, urlOben, urlUnten)`.
+
+GitHub Pages baut die Action `.github/workflows/pages.yml` bei jedem Push auf `main`.
