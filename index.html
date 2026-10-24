@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-visual">
+<meta name="theme-color" content="#111418">
+<title>PCB Tracer</title>
+  <script type="module" crossorigin src="./assets/index-C5Qu1fQX.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BfwNFPiR.css">
+</head>
+<body>
+
+<section id="list" class="screen">
+  <header class="top"><div class="title">PCB Tracer</div></header>
+  <div id="plist"></div>
+  <div class="listfoot">
+    <button id="btnNew" class="primary">+ Neues Projekt</button>
+    <div id="storeInfo" class="info"></div>
+  </div>
+</section>
+
+<section id="proj" class="screen" hidden>
+  <header class="top">
+    <button id="btnBack" aria-label="Projektliste">‹</button>
+    <div id="pname" class="title"></div>
+    <button id="sideChip" class="chip"></button>
+  </header>
+  <div id="stage"><canvas id="gl"></canvas><canvas id="ov"></canvas><div id="toast"></div>
+    <button id="compass" hidden><svg viewBox="-12 -12 24 24" width="26" height="26" aria-hidden="true"><path d="M0-10L4 0H0z" fill="#ff5a5a"/><path d="M0-10L-4 0H0z" fill="#ff5a5a" opacity=".45"/><path d="M0 10L4 0H0z" fill="#c8ccd2" opacity=".45"/><path d="M0 10L-4 0H0z" fill="#c8ccd2"/></svg></button>
+    <div id="objMenu" role="toolbar" aria-label="Zeichnung" hidden></div>
+    <div id="sheetView" role="dialog" aria-label="Ansicht" hidden>
+      <div id="vGrip" aria-hidden="true"><i></i></div>
+      <div class="vhead"><span>Darstellung</span><button id="vBefore" aria-label="Vorher (gedrückt halten)">Vorher</button><button id="vDone">Fertig</button></div>
+      <div class="vrow"><label for="vK">Bahnen deutlicher</label><input id="vK" type="range" min="0" max="100" value="0"></div>
+      <div id="vMat">
+        <div class="vrow tg" data-k="cu"><span class="vnm">Nur Kupfer</span><button class="tog" role="switch" aria-checked="false" aria-label="Nur Kupfer"><i></i></button></div>
+        <div class="vrow tg sub" data-k="pour"><span class="vnm">Kupferflächen ausblenden</span><button class="tog" role="switch" aria-checked="false" aria-label="Kupferflächen ausblenden"><i></i></button></div>
+        <div class="vrow tg" data-k="silk"><span class="vnm">Druck ausblenden</span><button class="tog" role="switch" aria-checked="false" aria-label="Druck ausblenden"><i></i></button></div>
+        <div class="vrow tg" data-k="bg"><span class="vnm">Hintergrund ausblenden</span><button class="tog" role="switch" aria-checked="false" aria-label="Hintergrund ausblenden"><i></i></button></div>
+        <div id="mNote" class="vnote" hidden></div>
+      </div>
+      <div id="vOrient" class="vrow"><span class="vnm">Drehen<span id="vAng"></span></span><button id="vRotL" aria-label="Gegen den Uhrzeigersinn drehen (R)" title="Drehen (R)">⟲</button><button id="vRotR" aria-label="Im Uhrzeigersinn drehen (Umschalt+R)" title="Drehen (Umschalt+R)">⟳</button><button id="vFlip" aria-pressed="false" title="Spiegeln (F)">Spiegeln</button></div>
+      <div class="vsub">Lagen</div>
+      <div id="vLayers"></div>
+      <div class="vsub">Andere Lagen</div>
+      <div id="vMode" class="seg" role="radiogroup" aria-label="Andere Lagen"></div>
+      <div id="vObjHead" class="vsub" hidden>Objekte</div>
+      <div id="vTr" class="vrow lay" hidden><button id="vTrEye" class="eye"></button><span class="vnm">Bahnen</span></div>
+      <div id="vObj" class="vrow lay" hidden><button id="vObjEye" class="eye"></button><span class="vnm">Zeichnungen</span></div>
+    </div>
+  </div>
+  <div id="barMain" class="bar">
+    <div class="row">
+      <div class="sidegrp"><button id="btnSide">Oben ⇄</button>
+      <input id="fade" type="range" min="0" max="100" value="0" aria-label="Durchsicht"></div>
+      <div id="grpMain" class="btngrp">
+        <button id="btnTrace" title="Bahnen nachziehen (X)">Bahnen</button>
+        <button id="btnDraw">Zeichnen</button>
+        <button id="btnView" aria-label="Ansicht">Ansicht</button>
+        <button id="btnMenu" aria-label="Menü">⋯</button>
+      </div>
+      <div id="grpTrace" class="btngrp" hidden>
+        <button id="tVia" title="Via setzen und Bahn beenden (V)">Via</button>
+        <button id="tWidth" title="Breite (W)" aria-label="Breite"></button>
+        <button id="tAng" title="Winkel frei oder 45° (Umschalt+Leertaste)" aria-label="Winkel"></button>
+        <button id="tUndo" aria-label="Rückgängig" title="Letzte Ecke zurück (Rücktaste)">↶</button>
+        <button id="tDone" class="primary">Fertig</button>
+      </div>
+      <div id="grpDraw" class="btngrp" hidden>
+        <div id="pens" class="pens" role="radiogroup" aria-label="Farbe"></div>
+        <button id="dUndo" aria-label="Rückgängig">↶</button>
+        <button id="dDone" class="primary">Fertig</button>
+      </div>
+    </div>
+  </div>
+  <div id="barStraight" class="bar" hidden>
+    <div id="sStatus" class="status"></div>
+    <div class="row">
+      <button id="sCorners" aria-pressed="false" title="Perspektive über die 4 Ecken der Platine entzerren">4 Ecken</button>
+      <button id="sUndo" aria-label="Rückgängig">↶</button>
+      <button id="sReset" title="Wie importiert">Zurücksetzen</button>
+      <button id="sDone" class="primary">Fertig</button>
+    </div>
+  </div>
+  <div id="barAlign" class="bar" hidden>
+    <div id="aStatus" class="status"></div>
+    <div id="aRowIdle" class="row">
+      <button id="aFlipX" title="Rückseite links/rechts spiegeln">⇆</button>
+      <button id="aFlipY" title="Rückseite oben/unten spiegeln">⇅</button>
+      <button id="aRot" title="Rückseite drehen">⟳</button>
+      <button id="aSuggest" title="Weitere Via-Paare automatisch suchen">✨ Vorschläge</button>
+      <button id="aLink" class="on" title="Ansichten koppeln">🔗</button>
+      <button id="aUndo" title="Rückgängig">↶</button>
+      <button id="aDone" class="primary">Fertig</button>
+    </div>
+    <div id="aRowPending" class="row" hidden>
+      <button id="aAccept" class="primary">✓ Paar übernehmen</button>
+      <button id="aCancel">✕</button>
+    </div>
+    <div id="aRowProps" class="row" hidden>
+      <button id="aAcceptAll" class="primary">✓ Alle übernehmen</button>
+      <button id="aRejectAll">✕</button>
+    </div>
+    <div id="aRowSel" class="row" hidden>
+      <button id="aDelete" class="danger">Paar löschen</button>
+      <button id="aDeselect">✕</button>
+    </div>
+  </div>
+</section>
+
+<div id="sheetNew" class="sheetwrap" hidden>
+  <div class="sheet">
+    <h2>Neues Projekt</h2>
+    <input id="newName" type="text" placeholder="Name der Platine" autocomplete="off">
+    <label class="filebtn" id="lblFront" role="button"><span>📷 Oberseite wählen</span><span class="fn" id="fnFront"></span><input id="fileFront" type="file" accept="image/*"></label>
+    <label class="filebtn" id="lblBack" role="button"><span>📷 Unterseite wählen</span><span class="fn" id="fnBack"></span><input id="fileBack" type="file" accept="image/*"></label>
+    <div id="newProg" hidden><div class="progress"><div id="newBar"></div></div><div id="newPText" class="ptext"></div></div>
+    <div id="newErr" class="err" hidden></div>
+    <div class="row"><button id="newCancel">Abbrechen</button><button id="newGo" class="primary" disabled>Importieren</button></div>
+  </div>
+</div>
+
+<div id="sheetMenu" class="sheetwrap" hidden>
+  <div class="sheet menu">
+    <button id="mAlign">⌖ Ausrichten</button>
+    <button id="mStraight">⊾ Gerade stellen</button>
+    <button id="mList">‹ Projektliste</button>
+    <button id="mClose">Schließen</button>
+  </div>
+</div>
+
+<div id="sheetItem" class="sheetwrap" hidden>
+  <div class="sheet menu">
+    <h2 id="itemTitle"></h2>
+    <button id="iOpen">Öffnen</button>
+    <button id="iDelete" class="danger">Projekt löschen</button>
+    <button id="iClose">Schließen</button>
+  </div>
+</div>
+
+<div id="sheetConfirm" class="sheetwrap" hidden>
+  <div class="sheet">
+    <h2 id="confTitle"></h2>
+    <div id="confText" style="color:var(--muted)"></div>
+    <div class="row"><button id="confNo">Abbrechen</button><button id="confYes" class="danger">Löschen</button></div>
+  </div>
+</div>
+
+<div id="noteEd" hidden><textarea id="noteTx" rows="1" placeholder="Text" aria-label="Text"></textarea><button id="noteDone" class="primary">Fertig</button></div>
+
+<div id="undoToast" hidden><span id="undoText"></span><button id="undoBtn">Rückgängig</button></div>
+
+</body>
+</html>
