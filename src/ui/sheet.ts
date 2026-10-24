@@ -60,6 +60,8 @@ export function updateViewUI() {
   $('#vTr').hidden = !hasTr; $('#vObjHead').hidden = !hasObj && !hasTr;
   if (te.dataset.h !== String(ht)) { te.dataset.h = ht; te.innerHTML = EYE + (ht ? '<path d="M3 3l18 18"/>' : '') + '</svg>'; te.setAttribute('aria-label', ht ? 'Bahnen einblenden' : 'Bahnen ausblenden'); }
   $('#vTr').classList.toggle('off', ht); te.classList.toggle('off', ht);
+  const nn = $('#vNN'), nb = nn.querySelector('.tog');
+  nn.hidden = !hasTr; nb.setAttribute('aria-checked', !lk.hideNN && !ht); nn.classList.toggle('dis', ht);
   if (document.activeElement !== $('#vK')) $('#vK').value = Math.round(lk.bahnen * 100);
   for (const b of $('#vMode').children) { const on = b.dataset.m === layerMode(); b.classList.toggle('on', on); b.setAttribute('aria-checked', on); }
   updateMatUI();

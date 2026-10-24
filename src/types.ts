@@ -37,6 +37,9 @@ export interface Look {
   hideTr?: boolean;          // Bahnen ausgeblendet
   tw?: number;               // Bahnbreite: 0 schmal, 1 normal, 2 breit
   tang?: number;             // Winkel beim Nachziehen: 0 frei (rastet nahe 0/45/90° ein), 1 nur 45°
+  vs?: number;               // Via-Größe für neue Vias: 0 klein, 1 normal, 2 groß
+  nofang?: boolean;          // Fang aus: nur direkte Treffer auf eigene Objekte, keine Foto-Vias
+  hideNN?: boolean;          // Netznamen auf den Bahnen ausgeblendet
 }
 
 // Gespeicherte Hauptansicht
@@ -49,7 +52,7 @@ export interface View { cx: number; cy: number; s: number; t: number; draw: bool
 //   Bahnen (draw/trace.ts): node, via, pad (Punkt x, y + Anker img, u, v), seg (a, b = Punkt-IDs, w Breite), net (name, seeds, num, siehe draw/nets.ts)
 export interface Obj {
   id: string; t: 'text' | 'ink' | 'pin' | 'node' | 'via' | 'pad' | 'seg' | 'net' | string; L: string; img?: string; color?: string; note?: string;
-  a?: string; b?: string; w?: number; d?: number; name?: string; ok?: boolean; seeds?: string[]; num?: number;
+  a?: string; b?: string; w?: number; d?: number; dv?: number; name?: string; ok?: boolean; seeds?: string[]; num?: number;
   x?: number; y?: number; u?: number; v?: number;
   h?: number; rot?: number; lead?: boolean; lx?: number; ly?: number; lu?: number; lv?: number;
   pts?: Pt[]; uv?: Pt[]; arrow?: boolean;

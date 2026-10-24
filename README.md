@@ -15,10 +15,13 @@ Browser-Speicher des Geräts (IndexedDB) und werden nirgends hochgeladen.
   weitere Paare automatisch vorschlagen lassen, Abweichung je Paar als Ampelfarbe
 - Ansicht drehen und spiegeln (zwei Finger, Ansicht ⟲ ⟳ Spiegeln, Tasten R / Umschalt+R / F), Kompass setzt zurück
 - Platine gerade stellen (⋯ → Gerade stellen): Linie entlang einer Bahn ziehen oder 4 Ecken antippen
-- Bahnen nachziehen (Bahnen, Desktop X): Ecken mit Lupe bzw. Klick, Einrasten auf Vias und eigene Ecken/Bahnen (Abzweig),
-  Winkel frei mit Einrasten nahe 0/45/90° oder nur 45°, Breite (W), Via (V), letzte Ecke zurück (↶, Rücktaste),
-  beenden (Doppeltipp/Doppelklick, Ende, Esc). Bahn endet am Via; Tipp auf das Via startet auf der anderen Lage neu.
-  Netze werden automatisch erkannt, Antippen hebt hervor, Benennen über das Menü
+- Bahnen nachziehen (Bahnen, Desktop X): Ecken mit Lupe bzw. Klick. Einrasten zurückhaltend: kleiner Fang am Bildschirm,
+  nur wenn das Ziel eindeutig ist, Vorschau als Ring in der Lupe; „Fang“ in der Leiste schaltet es ab (Desktop: Umschalt halten).
+  Ziele: Foto-Vias (nur als Ecke), eigene Vias/Pads/Ecken/Bahnen (Abzweig). Winkel frei mit Einrasten nahe 0/45/90° oder nur 45°,
+  Breite (W), letzte Ecke zurück (↶, Rücktaste), beenden (Doppeltipp/Doppelklick, Ende, Esc).
+  Vias entstehen nur bewusst: Via (V) an der letzten Ecke beendet die Bahn, „Via“ im Menü einer Ecke; Größe in Stufen im Via-Menü.
+  Tipp auf das Via startet auf der anderen Lage neu. Netze werden automatisch erkannt, Antippen hebt hervor, Benennen über das Menü;
+  benannte Netze zeigen ihren Namen entlang der Bahn (Ansicht → Objekte → Netznamen)
 
 Geplant: Bahnen bearbeiten, Netzliste, Export/Import, Nahaufnahmen.
 

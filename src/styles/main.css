@@ -67,7 +67,9 @@ input[type=range]{flex:1;accent-color:var(--accent);height:48px;margin:0}
 .btngrp>button{flex:1;padding:0 8px}
 #btnMenu,#dUndo,#tUndo{flex:0 0 48px}
 #grpTrace>button{flex:1 1 auto;padding:0 6px}
+#tFang.off{color:var(--muted);text-decoration:line-through}
 i.tw{display:block;width:16px;border-radius:2px;background:currentColor;flex:none}
+i.vd{display:block;width:var(--vd);height:var(--vd);border-radius:50%;border:2.5px solid currentColor;box-sizing:border-box;flex:none;margin-right:6px}
 .pens{display:flex;flex:0 0 auto}
 button.pen{flex:0 0 48px;width:48px;padding:0;background:transparent;border-color:transparent}
 button.pen i{display:block;width:26px;height:26px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.6)}

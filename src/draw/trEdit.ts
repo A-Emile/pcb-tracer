@@ -1,18 +1,17 @@
 import { loupeMove, loupeSnap, loupeStart } from '../align/loupe';
-import { snapR } from '../align/snap';
 import { edit, toastUndo } from './edit';
 import { buildMenu } from './menu';
 import { netLabel, netOf, segsOf } from './nets';
 import { closeNote, onVV, placeNote } from './note';
 import { TR_PT, TR_TYPES, anchorFrom, clone, newId, objBump, objById, objMap, pickId, r1 } from './objects';
 import {
-  TR, TW_F, TW_NAME, fine, imgOf, newPt, other, queue, route, splitSeg, trFinish, trHit, trStart, trSelect, trShown, trSnap, trSnapSync, updateTrUI, viaD,
+  TR, TW_F, TW_NAME, VS_F, snapMark, VS_NAME, fangR, fine, imgOf, newPt, other, padD, queue, route, splitSeg, trFinish, trHit, trStart, trSelect, trShown, trSnap, trSnapSync, updateTrUI, viaCu, viaD,
 } from './trace';
 import { setActive } from '../layers/actions';
 import { activeLayer, layerById, layerColor, layerName, layerShort, layers } from '../layers/model';
 import { octx } from '../render/gl';
 import { dirty } from '../render/frame';
-import { S } from '../state';
+import { S, lookState } from '../state';
 import { openNetsFor } from '../ui/netsheet';
 import { gest, setGest } from '../ui/pointer';
 import { toast } from '../ui/toast';
@@ -75,9 +74,8 @@ export function handleAt(x, y, mouse) {
   return best;
 }
 export function drawHandles(pane, cam) {
-  if (pane.loupe) return;
   octx.save();
-  for (const h of trHandles()) {
+  if (!pane.loupe) for (const h of trHandles()) {
     const s = w2s(cam, pane, h.x, h.y);
     if (h.k === 'mid') {
       if (!midShown(h, cam, pane)) continue;
@@ -89,18 +87,11 @@ export function drawHandles(pane, cam) {
       octx.beginPath(); octx.arc(s[0], s[1], 6.5, 0, 7); octx.fill(); octx.stroke();
     }
   }
-  // Fang beim Ziehen: Finger = Fang der Lupe, Maus = Fang am Zeiger
+  // Fang beim Ziehen (auch in der Lupe): Finger = Fang der Lupe, Maus = Fang am Zeiger
   const D = ED.drag;
   if (D && D.h.k === 'pt') {
     const pv = S.preview, pt = D.mouse ? ED.msnap : pv && pv.pane === 'main' && S.loupe && pv.at[0] === S.loupe.x && pv.at[1] === S.loupe.y ? pv.pt : null;
-    if (pt && pt.kind !== 'free') {
-      const q = w2s(cam, pane, pt.x, pt.y), o = objById(pt.id), r = pt.kind === 'pvia' ? pt.d / 2 : o && (o.t === 'via' || o.t === 'pad') ? (o.d || 20) / 2 : 6;
-      const rad = Math.max(9, r * cam.s + 3);
-      octx.setLineDash(pt.kind === 'blob' ? [4, 3] : []);
-      octx.lineWidth = 3.5; octx.strokeStyle = 'rgba(0,0,0,.6)'; octx.beginPath(); octx.arc(q[0], q[1], rad, 0, 7); octx.stroke();
-      octx.lineWidth = 2; octx.strokeStyle = '#fff'; octx.beginPath(); octx.arc(q[0], q[1], rad, 0, 7); octx.stroke();
-      octx.setLineDash([]);
-    }
+    snapMark(pane, cam, pt);
   }
   octx.restore();
 }
@@ -183,7 +174,7 @@ export function dragTo(w) {
   const p = [w[0] + D.off[0], w[1] + D.off[1]];
   liveTouch(D, id);
   if (D.mouse) {   // Maus: Fang sofort sichtbar und der Punkt sitzt schon dort
-    const pt = trSnapSync(p[0], p[1], snapR(S.cams.main.s), id);
+    const pt = trSnapSync(p[0], p[1], fangR(S.cams.main.s), id);
     ED.msnap = pt;
     if (pt && pt.kind !== 'free' && (pt.kind !== 'seg' || !segsOf(id).some(s => s.id === pt.id))) { o.x = pt.x; o.y = pt.y; }
     else { o.x = p[0]; o.y = p[1]; }
@@ -196,7 +187,8 @@ export function dragCancel() {
   liveRestore(D); ED.drag = null; ED.msnap = null;
   buildMenu(); dirty();
 }
-// Punkt absetzen am Fangpunkt pt: auf einem anderen Punkt oder Segment wird verbunden, ein loses Ende auf einem Foto-Via wird Via
+// Punkt absetzen am Fangpunkt pt: auf einem anderen Punkt oder Segment wird verbunden. Ein Foto-Via ist nur Einrastpunkt
+// (kein automatisches Via; bewusst über „Via“ im Menü der Ecke)
 function commitPt(pt) {
   const D = ED.drag;
   ED.drag = null; ED.msnap = null;
@@ -210,7 +202,6 @@ function commitPt(pt) {
     e.mod(id, o => { o.x = r1(pt.x); o.y = r1(pt.y); anchorFrom(o); });
     if (tgt && isPt(tgt)) keep = mergePts(e, id, tgt.id);
     else if (pt.kind === 'seg' && !own.includes(pt.id) && objById(pt.id)) keep = mergePts(e, id, splitSeg(e, pt.id, pt.x, pt.y));
-    else if (pt.kind === 'pvia' && objById(id).t === 'node' && own.length === 1) e.mod(id, q => { q.t = 'via'; q.L = '*'; q.d = r1(pt.d); });
   });
   if (pickId() !== keep && objById(keep)) trSelect(keep);
   buildMenu(); updateTrUI(); dirty();
@@ -246,7 +237,7 @@ export function dragFinish(w?) {
   if (!D) return;
   if (D.h.k === 'mid') { commitMid(); return; }
   const o = objById(D.h.id), p = w ? [w[0] + D.off[0], w[1] + D.off[1]] : [o.x, o.y];
-  queue(async () => { const pt = await trSnap(p[0], p[1], snapR(S.cams.main.s), D.h.id); if (ED.drag === D) commitPt(pt); });
+  queue(async () => { const pt = await trSnap(p[0], p[1], fangR(S.cams.main.s), D.h.id); if (ED.drag === D) commitPt(pt); });
 }
 
 // ---- Gesten (aus ui/gestures.ts, vor dem Zeichnen/Nachziehen): Griff unter dem Finger/Mauszeiger?
@@ -261,7 +252,7 @@ export function trHandleDown(pane, x, y, mouse) {
   if (!h) return false;
   const hs = w2s(S.cams.main, pane, h.x, h.y);
   setGest({ kind: 'trh', pane, moved: false, x0: x, y0: y, t0: performance.now(), h, mouse, hs });
-  if (!mouse) loupeStart(pane, x, y, hs[0], hs[1], false, h.k === 'mid', h.k === 'pt' ? (w, R) => trSnap(w[0], w[1], R, h.id) : undefined);
+  if (!mouse) loupeStart(pane, x, y, hs[0], hs[1], false, h.k === 'mid', h.k === 'pt' ? (w, _R, sc) => trSnap(w[0], w[1], fangR(sc), h.id) : undefined);
   return true;
 }
 export function trhMove(x, y) {
@@ -351,24 +342,44 @@ export function cycleSelWidth() {
   buildMenu(); toast('Breite: ' + TW_NAME[ni], 1200);
 }
 export const widthIdx = s => { const f = s.w / (0.27 * viaD(imgOf(s.L))); let i = 0; TW_F.forEach((v, k) => { if (Math.abs(v - f) < Math.abs(TW_F[i] - f)) i = k; }); return i; };
-// ganze Bahn auf eine andere Lage legen; Enden mit weiteren Stücken auf der alten Lage werden zu Vias
+// ganze Bahn auf eine andere Lage legen. Enden mit weiteren Stücken auf der alten Lage werden zu Vias: dort wechselt die Verbindung
+// die Lage, ohne Via wäre sie elektrisch falsch (oder müsste aufgetrennt werden). Die Meldung nennt die Zahl, Rückgängig nimmt alles zurück.
 export function bahnToLayer(segId, L) {
   const s = objById(segId);
   if (!s || s.L === L) return;
   const ch = chainOf(segId), set = new Set(ch.segs.map(q => q.id));
+  let nv = 0;
   edit(e => {
     for (const q of ch.segs) e.mod(q.id, x => { x.L = L; });
     for (const pid of ch.pts) {
       const P = objById(pid);
       if (!P || P.t !== 'node') continue;
       if (segsOf(pid).every(q => set.has(q.id))) e.mod(pid, o => { o.L = L; o.img = imgOf(L); anchorFrom(o); });
-      else e.mod(pid, o => { o.t = 'via'; o.L = '*'; o.d = r1(viaD(o.img)); });
+      else { nv++; e.mod(pid, o => { o.t = 'via'; o.L = '*'; o.d = viaCu(o.img); o.dv = 2; }); }
     }
   });
   setActive(L);
   selectBahn(segId);
   const nl = layerById(L);
-  toastUndo('Auf ' + (nl ? layerName(nl) : L) + ' gelegt');
+  toastUndo('Auf ' + (nl ? layerName(nl) : L) + ' gelegt' + (nv ? ' · ' + (nv === 1 ? 'Via' : nv + ' Vias') + ' am Abzweig' : ''));
+}
+// Ecke bewusst zum Via machen (Menü „Via“): Größe = Vorgabe (Stufe look.vs)
+export function nodeToVia(id) {
+  const n = objById(id);
+  if (!n || n.t !== 'node') return;
+  edit(e => e.mod(id, o => { o.t = 'via'; o.L = '*'; o.d = viaCu(o.img); o.dv = 2; }));
+  trSelect(id); updateTrUI();
+  toastUndo('Via gesetzt');
+}
+// Via-Größe der Auswahl weiterschalten (Klein → Normal → Groß); die gewählte Stufe gilt auch für neue Vias
+export const viaSizeIdx = o => { const f = (o.d || 0) / viaCu(o.img, 1); let i = 0; VS_F.forEach((v, k) => { if (Math.abs(v - f) < Math.abs(VS_F[i] - f)) i = k; }); return i; };
+export function cycleViaSize(id) {
+  const o = objById(id);
+  if (!o || o.t !== 'via') return;
+  const ni = (viaSizeIdx(o) + 1) % VS_F.length;
+  lookState().vs = ni;
+  edit(e => e.mod(id, q => { q.d = viaCu(q.img, ni); q.dv = 2; }));
+  buildMenu(); toast('Via: ' + VS_NAME[ni] + ' (auch für neue)', 1400);
 }
 const nextLayer = L => { const ls = layers(), i = ls.findIndex(x => x.id === L); return ls.length ? ls[(i + 1) % ls.length].id : L; };
 
@@ -386,10 +397,10 @@ export function placePad(pt) {
   if (tgt && tgt.t === 'pad') { trSelect(tgt.id); renamePad(tgt.id); updateTrUI(); return; }
   let id = null;
   edit(e => {
-    if (tgt && (tgt.t === 'node' || tgt.t === 'via')) { id = tgt.id; e.mod(id, o => { o.t = 'pad'; o.name = ''; o.d = r1(o.d || viaD(o.img)); }); return; }
-    if (pt.kind === 'seg' && objById(pt.id)) { id = splitSeg(e, pt.id, pt.x, pt.y); e.mod(id, o => { o.t = 'pad'; o.name = ''; o.d = r1(viaD(o.img)); }); return; }
-    const L = pt.kind === 'pvia' ? '*' : activeLayer(), p = newPt('pad', L, pt.x, pt.y, { name: '' });
-    p.d = r1(pt.kind === 'pvia' ? pt.d : viaD(p.img));
+    if (tgt && (tgt.t === 'node' || tgt.t === 'via')) { id = tgt.id; e.mod(id, o => { o.d = r1(o.t === 'via' && o.d ? o.d : padD(o.img)); o.t = 'pad'; o.name = ''; o.dv = 2; }); return; }
+    if (pt.kind === 'seg' && objById(pt.id)) { id = splitSeg(e, pt.id, pt.x, pt.y); e.mod(id, o => { o.t = 'pad'; o.name = ''; o.d = padD(o.img); o.dv = 2; }); return; }
+    const L = pt.kind === 'pvia' ? '*' : activeLayer(), p = newPt('pad', L, pt.x, pt.y, { name: '', dv: 2 });
+    p.d = r1(pt.kind === 'pvia' ? pt.d : padD(p.img));
     e.put(p); id = p.id;
   });
   trSelect(id);
@@ -433,6 +444,8 @@ export function trMenu(o, btn) {
     return;
   }
   net();
+  if (o.t === 'node') btn('Via', () => nodeToVia(o.id), '', 'Hier ein Via setzen');
+  if (o.t === 'via') { const i = viaSizeIdx(o); btn(`<i class="vd" style="--vd:${[8, 11, 14][i]}px"></i>${VS_NAME[i]}`, () => cycleViaSize(o.id), '', 'Via-Größe: ' + VS_NAME[i]); }
   if (o.t === 'seg') {
     const i = widthIdx(selSegs()[0] || o);
     btn(`<i class="tw" style="height:${[2, 4, 7][i]}px"></i>Breite`, () => cycleSelWidth(), '', 'Breite: ' + TW_NAME[i]);
@@ -474,7 +487,7 @@ export function edKey(e, k, plain) {
   if (lk === 'p' && hov) {
     e.preventDefault();
     const w = s2w(cam, pane, hov.x, hov.y);
-    queue(async () => placePad(await trSnap(w[0], w[1], snapR(cam.s))));
+    queue(async () => placePad(await trSnap(w[0], w[1], fangR(cam.s), undefined, true)));
     return true;
   }
   return false;

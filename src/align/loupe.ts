@@ -9,7 +9,7 @@ import { s2w } from '../view/camera';
 // Der Punkt bewegt sich langsamer als der Finger (fein justieren).
 // Gefangen wird erst nach kurzer Ruhe (SNAP_REST), immer nur ein Auftrag; beim Loslassen gilt genau die letzte Lupenposition.
 export const LOUPE = 128, FINE = 0.35, SNAP_REST = 100;
-// snapFn(w, R): eigener Fang (Weltpunkt, Radius in Weltpixeln) statt Via-Fang auf dem Foto des Fensters (Bahnen, draw/trace.ts)
+// snapFn(w, R, s): eigener Fang (Weltpunkt, Radius in Weltpixeln, Lupenmaßstab) statt Via-Fang auf dem Foto des Fensters (Bahnen, draw/trace.ts)
 export function loupeStart(pane, fx, fy, tx, ty, fine, nosnap?, snapFn?) {
   const st = $('#stage'), above = fy - 110 - LOUPE / 2 >= 4;
   S.loupe = { pane, fx, fy, fx0: fx, fy0: fy, x: tx, y: ty, x0: tx, y0: ty, fine, timer: 0, job: null, again: false, nosnap: !!nosnap, keepFx: !!nosnap || !!snapFn, snapFn,
@@ -33,7 +33,7 @@ export function loupeSnap(L, force?) {
   if (L.job && !L.job.done && !force) { L.again = true; return null; }
   const cam = S.cams[L.pane.id], w = s2w(cam, L.pane, L.x, L.y), at = [L.x, L.y];
   const job: any = L.job = { key, done: false };
-  job.p = (L.snapFn ? L.snapFn(w, snapR(loupeScale(cam))) : snapPane(L.pane.id, w[0], w[1], snapR(loupeScale(cam)))).then(pt => {
+  job.p = (L.snapFn ? L.snapFn(w, snapR(loupeScale(cam)), loupeScale(cam)) : snapPane(L.pane.id, w[0], w[1], snapR(loupeScale(cam)))).then(pt => {
     job.done = true; job.pt = pt;
     if (S.loupe === L && L.x === at[0] && L.y === at[1]) { S.preview = { pane: L.pane.id, pt, at }; dirty(); }
     if (S.loupe === L && L.again) { L.again = false; loupeSnap(L); }

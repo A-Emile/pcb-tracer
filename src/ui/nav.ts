@@ -10,7 +10,7 @@ import { resetRedo } from '../draw/edit';
 import { netInit } from '../draw/nets';
 import { migrateObjs } from '../draw/objects';
 import { ED, dragCancel } from '../draw/trEdit';
-import { TR, setTrace, trClearHi, trFinish, trLoadVias, updateTrUI } from '../draw/trace';
+import { TR, setTrace, trClearHi, trFinish, trLoadVias, updateTrUI, viaMigrate } from '../draw/trace';
 import { migrateTexts } from '../draw/text';
 import { updateSideUI } from '../layers/actions';
 import { migrateLook } from '../layers/model';
@@ -69,6 +69,7 @@ export async function openProject(p) {
   const mt = migrateTexts(p);   // alte Notiz-Nadeln → Textfelder (braucht Ausrichtung und Ansicht)
   resetRedo(); ED.whole = null; ED.drag = null; TR.tool = 'bahn';
   const nm = netInit(p);   // Netz-Objekte für ältere Stände (feste Nummern, draw/nets.ts)
+  const vmg = viaMigrate(p);   // Via/Pad-Größe älterer Stände: Kupferring statt Fund der Via-Suche (draw/trace.ts)
   if (netsOpen()) showNets(false);
   S.t = clamp(p.view && +p.view.t || 0, 0, 1);
   $('#fade').value = Math.round(S.t * 100);
@@ -80,7 +81,7 @@ export async function openProject(p) {
   else if (p.route) p.route = null;
   updateDrawUI(); updateTrUI();
   history.pushState({ p: p.id }, '');
-  if (migrated || mt || nm) saveSoon();
+  if (migrated || mt || nm || vmg) saveSoon();
   matOpen(p);
   dirty();
 }

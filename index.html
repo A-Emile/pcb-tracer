@@ -50,6 +50,7 @@
       <div id="vMode" class="seg" role="radiogroup" aria-label="Andere Lagen"></div>
       <div id="vObjHead" class="vsub" hidden>Objekte</div>
       <div id="vTr" class="vrow lay" hidden><button id="vTrEye" class="eye"></button><span class="vnm">Bahnen</span></div>
+      <div id="vNN" class="vrow tg sub" hidden><span class="vnm">Netznamen</span><button class="tog" role="switch" aria-checked="true" aria-label="Netznamen auf den Bahnen"><i></i></button></div>
       <div id="vObj" class="vrow lay" hidden><button id="vObjEye" class="eye"></button><span class="vnm">Zeichnungen</span></div>
     </div>
   </div>
@@ -64,10 +65,11 @@
         <button id="btnMenu" aria-label="Menü">⋯</button>
       </div>
       <div id="grpTrace" class="btngrp" hidden>
-        <button id="tVia" title="Via setzen und Bahn beenden (V)" hidden>Via</button>
+        <button id="tVia" title="Via an der letzten Ecke setzen und Bahn beenden (V)" hidden>Via</button>
         <button id="tPad" title="Pad setzen (P)" aria-pressed="false">Pad</button>
         <button id="tWidth" title="Breite (W)" aria-label="Breite"></button>
         <button id="tAng" title="Winkel frei oder 45° (Umschalt+Leertaste)" aria-label="Winkel"></button>
+        <button id="tFang" title="Einrasten an/aus (Umschalt halten: vorübergehend aus)" aria-pressed="true">Fang</button>
         <button id="tUndo" aria-label="Rückgängig" title="Letzte Ecke zurück (Rücktaste)">↶</button>
         <button id="tDone" class="primary">Fertig</button>
       </div>
